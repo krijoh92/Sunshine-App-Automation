@@ -371,13 +371,18 @@ def process_existing_apps(sunshine_config: Dict, installed_games: Dict[str, str]
     updated_apps = []
     removed_games = []
     existing_steam_apps = set()
-    
+
     for app in sunshine_config.get('apps', []):
-        if 'cmd' in app and app['cmd'].startswith('steam://rungameid/'):
+        if 'cmd' in app and 'steam://rungameid/' in app['cmd']:
             app_id = app['cmd'].split('/')[-1]
             if app_id in installed_games:
-                updated_apps.append(app)
-                existing_steam_apps.add(app_id)
+                # Only add if we haven't seen this app_id before (prevents duplicates)
+                if app_id not in existing_steam_apps:
+                    updated_apps.append(app)
+                    existing_steam_apps.add(app_id)
+                    logging.debug(f"Keeping existing Steam game: {app.get('name', 'Unknown')} (ID: {app_id})")
+                else:
+                    logging.debug(f"Skipping duplicate Steam game: {app.get('name', 'Unknown')} (ID: {app_id})")
             else:
                 removed_games.append((app.get('name', 'Unknown'), app_id))
                 # Clean up grid image
@@ -391,7 +396,7 @@ def process_existing_apps(sunshine_config: Dict, installed_games: Dict[str, str]
         else:
             # Keep non-Steam apps
             updated_apps.append(app)
-    
+
     return updated_apps, removed_games, existing_steam_apps
 
 def add_new_games(new_games: Set[str], installed_games: Dict[str, str], api_key: str, grids_folder: str) -> List[Dict]:

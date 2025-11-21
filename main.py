@@ -53,10 +53,10 @@ def validate_config() -> Dict[str, str]:
     load_dotenv()
     
     required_vars = {
-        'steam_library_vdf_path': 'Steam library VDF file path',
-        'sunshine_apps_json_path': 'Sunshine apps.json file path',
-        'sunshine_grids_folder': 'Sunshine grids folder path',
-        'steamgriddb_api_key': 'SteamGridDB API key'
+        'STEAM_LIBRARY_VDF_PATH': 'Steam library VDF file path',
+        'SUNSHINE_APPS_JSON_PATH': 'Sunshine apps.json file path',
+        'SUNSHINE_GRIDS_FOLDER': 'Sunshine grids folder path',
+        'STEAMGRIDDB_API_KEY': 'SteamGridDB API key'
     }
     
     config = {}

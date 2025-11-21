@@ -418,39 +418,44 @@ def add_new_games(new_games: Set[str], installed_games: Dict[str, str], api_key:
             
             try:
                 grid_path = future.result()
-                game_name = installed_games[app_id]
-                
-                # Determine command based on platform
-                if os.name == 'nt':
-                    cmd = f"steam://rungameid/{app_id}"
-                else:
-                    # Check for Flatpak Steam
+            except Exception as e:
+                logging.warning(f"Failed to download grid for {app_id}: {e}")
+                grid_path = None
+
+            game_name = installed_games[app_id]
+
+            # Determine command based on platform
+            if os.name == 'nt':
+                cmd = f"steam://rungameid/{app_id}"
+            else:
+                # Check for Flatpak Steam
+                try:
                     flatpak_steam = subprocess.run(
-                        ['flatpak', 'list', '--app', '--columns=application'], 
-                        capture_output=True, text=True
+                        ['flatpak', 'list', '--app', '--columns=application'],
+                        capture_output=True, text=True, check=False
                     ).stdout
-                    
-                    if 'com.valvesoftware.Steam' in flatpak_steam:
+
+                    if flatpak_steam and 'com.valvesoftware.Steam' in flatpak_steam:
                         cmd = f"flatpak run com.valvesoftware.Steam steam://rungameid/{app_id}"
                     else:
                         cmd = f"steam steam://rungameid/{app_id}"
-                
-                new_app = {
-                    "name": game_name,
-                    "cmd": cmd,
-                    "output": "",
-                    "detached": "",
-                    "elevated": "false",
-                    "hidden": "true",
-                    "wait-all": "true",
-                    "exit-timeout": "5",
-                    "image-path": grid_path or ""
-                }
-                new_apps.append(new_app)
-                logging.info(f"Added: {game_name}")
-                
-            except Exception as e:
-                logging.error(f"Error processing new game {app_id}: {e}")
+                except FileNotFoundError:
+                    # Flatpak not installed, use regular steam command
+                    cmd = f"steam steam://rungameid/{app_id}"
+
+            new_app = {
+                "name": game_name,
+                "cmd": cmd,
+                "output": "",
+                "detached": "",
+                "elevated": "false",
+                "hidden": "true",
+                "wait-all": "true",
+                "exit-timeout": "5",
+                "image-path": grid_path or ""
+            }
+            new_apps.append(new_app)
+            logging.info(f"Added: {game_name}")
             
             if processed % 10 == 0 or processed == len(new_games):
                 logging.info(f"Processed {processed}/{len(new_games)} new games...")
